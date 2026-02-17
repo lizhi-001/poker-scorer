@@ -2,3 +2,88 @@
 .room-name { font-size: 36rpx; font-weight: bold; }
 .room-info { color: #999; font-size: 26rpx; }
 .actions { margin-top: 32rpx; display: flex; flex-direction: column; gap: 20rpx; }
+
+.section-title {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+  font-weight: 500;
+}
+
+.player-list {
+  margin-bottom: 20rpx;
+}
+
+.player-card {
+  background: #fff;
+  padding: 24rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.player-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.player-name {
+  font-size: 32rpx;
+  font-weight: 500;
+}
+
+.player-chips {
+  text-align: right;
+}
+
+.chips-value {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #1a1a2e;
+}
+
+.chips-label {
+  font-size: 22rpx;
+  color: #999;
+  margin-left: 8rpx;
+}
+
+.player-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.meta-text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.profit-positive {
+  font-size: 24rpx;
+  color: #2ecc71;
+  font-weight: 500;
+}
+
+.profit-negative {
+  font-size: 24rpx;
+  color: #e74c3c;
+  font-weight: 500;
+}
+
+.player-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.swipe-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 65px;
+  height: 100%;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 28rpx;
+}

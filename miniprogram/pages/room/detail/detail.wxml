@@ -6,12 +6,68 @@
     </view>
     <view class="room-info">盲注 {{room.smallBlind}}/{{room.bigBlind}} · 买入 {{room.buyIn}}</view>
   </view>
-  <van-cell-group title="玩家 ({{players.length}}人)">
-    <van-cell wx:for="{{players}}" wx:key="_id" title="{{item.nickname}}" value="筹码: {{item.currentChips}}" label="买入 {{item.buyInCount}}次 · 共 {{item.totalBuyIn}}" />
-  </van-cell-group>
+
+  <view class="section-title">玩家 ({{players.length}}人)</view>
+
+  <view class="player-list">
+    <van-swipe-cell
+      wx:for="{{players}}"
+      wx:key="_id"
+      right-width="{{ 65 }}"
+    >
+      <view class="player-card">
+        <view class="player-main">
+          <view class="player-name">{{item.nickname}}</view>
+          <view class="player-chips">
+            <text class="chips-value">{{item.currentChips}}</text>
+            <text class="chips-label">筹码</text>
+          </view>
+        </view>
+        <view class="player-meta">
+          <text class="meta-text">买入 {{item.buyInCount}}次 · 共{{item.totalBuyIn}}</text>
+          <text
+            class="{{item.currentChips - item.totalBuyIn >= 0 ? 'profit-positive' : 'profit-negative'}}"
+          >{{item.currentChips - item.totalBuyIn >= 0 ? '+' : ''}}{{item.currentChips - item.totalBuyIn}}</text>
+        </view>
+        <view class="player-actions">
+          <van-button
+            size="small"
+            type="info"
+            plain
+            data-id="{{item._id}}"
+            bind:click="onOpenBuyIn"
+          >买入</van-button>
+        </view>
+      </view>
+      <view slot="right" class="swipe-delete" data-id="{{item._id}}" bind:tap="onRemovePlayer">
+        移除
+      </view>
+    </van-swipe-cell>
+  </view>
+
+  <van-empty wx:if="{{players.length === 0}}" description="暂无玩家，点击下方添加" />
+
   <view class="actions">
     <van-button type="info" block bind:click="onAddPlayer">添加玩家</van-button>
     <van-button type="primary" block bind:click="onStartRound" disabled="{{players.length < 2}}">记录一手牌</van-button>
     <van-button type="warning" block bind:click="onSettle">结算牌局</van-button>
   </view>
+
+  <!-- 买入弹窗 -->
+  <van-dialog
+    use-slot
+    show="{{ showBuyInDialog }}"
+    title="追加买入"
+    show-cancel-button
+    bind:confirm="onConfirmBuyIn"
+    bind:close="onCloseBuyIn"
+  >
+    <van-field
+      label="金额"
+      type="number"
+      placeholder="输入买入金额"
+      value="{{ buyInAmount }}"
+      bind:change="onBuyInAmountChange"
+    />
+  </van-dialog>
 </view>
