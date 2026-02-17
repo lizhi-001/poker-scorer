@@ -1,0 +1,15 @@
+<view class="container">
+  <view class="card">
+    <van-field label="牌局名称" placeholder="如：周五德扑局" model:value="{{name}}" />
+    <van-cell title="小盲注" center>
+      <van-stepper slot="right-icon" value="{{smallBlind}}" min="1" step="5" bind:change="onSmallBlindChange" />
+    </van-cell>
+    <van-cell title="大盲注" center>
+      <van-stepper slot="right-icon" value="{{bigBlind}}" min="2" step="10" bind:change="onBigBlindChange" />
+    </van-cell>
+    <van-cell title="默认买入" center>
+      <van-stepper slot="right-icon" value="{{buyIn}}" min="100" step="100" bind:change="onBuyInChange" />
+    </van-cell>
+  </view>
+  <van-button type="primary" block bind:click="onSubmit" loading="{{loading}}">创建牌局</van-button>
+</view>

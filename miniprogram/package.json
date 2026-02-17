@@ -1,0 +1,13 @@
+{
+  "name": "poker-scorer-miniprogram",
+  "version": "1.0.0",
+  "description": "德扑记分器小程序前端",
+  "dependencies": {
+    "@vant/weapp": "^1.11.6",
+    "mobx-miniprogram": "^4.13.2",
+    "mobx-miniprogram-bindings": "^2.1.5"
+  },
+  "devDependencies": {
+    "miniprogram-api-typings": "^3.12.3"
+  }
+}

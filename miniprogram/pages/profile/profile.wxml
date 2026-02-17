@@ -1,0 +1,14 @@
+<view class="container">
+  <view class="card user-card">
+    <van-image wx:if="{{userInfo.avatarUrl}}" round width="120rpx" height="120rpx" src="{{userInfo.avatarUrl}}" />
+    <view class="user-info">
+      <text class="nickname">{{userInfo.nickName || '未登录'}}</text>
+      <text class="text-muted">总牌局: {{totalGames}} 场</text>
+    </view>
+  </view>
+  <van-button wx:if="{{!userInfo}}" type="primary" block bind:click="onLogin">微信登录</van-button>
+  <van-cell-group title="我的战绩" wx:if="{{userInfo}}">
+    <van-cell title="总盈亏" value="{{totalProfit >= 0 ? '+' : ''}}{{totalProfit}}" value-class="{{totalProfit >= 0 ? 'text-success' : 'text-danger'}}" />
+    <van-cell title="参与牌局" value="{{totalGames}} 场" />
+  </van-cell-group>
+</view>

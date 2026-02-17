@@ -1,0 +1,17 @@
+<view class="container">
+  <view class="card">
+    <view class="room-header">
+      <text class="room-name">{{room.name}}</text>
+      <van-tag type="success" wx:if="{{room.status === 'active'}}">进行中</van-tag>
+    </view>
+    <view class="room-info">盲注 {{room.smallBlind}}/{{room.bigBlind}} · 买入 {{room.buyIn}}</view>
+  </view>
+  <van-cell-group title="玩家 ({{players.length}}人)">
+    <van-cell wx:for="{{players}}" wx:key="_id" title="{{item.nickname}}" value="筹码: {{item.currentChips}}" label="买入 {{item.buyInCount}}次 · 共 {{item.totalBuyIn}}" />
+  </van-cell-group>
+  <view class="actions">
+    <van-button type="info" block bind:click="onAddPlayer">添加玩家</van-button>
+    <van-button type="primary" block bind:click="onStartRound" disabled="{{players.length < 2}}">记录一手牌</van-button>
+    <van-button type="warning" block bind:click="onSettle">结算牌局</van-button>
+  </view>
+</view>

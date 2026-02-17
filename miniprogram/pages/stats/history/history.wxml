@@ -1,0 +1,6 @@
+<view class="container">
+  <van-cell-group wx:if="{{rooms.length}}">
+    <van-cell wx:for="{{rooms}}" wx:key="_id" title="{{item.name}}" label="{{item.playerIds.length}}人 · 盲注 {{item.smallBlind}}/{{item.bigBlind}}" is-link bind:click="onTap" data-id="{{item._id}}" />
+  </van-cell-group>
+  <van-empty wx:else description="暂无历史牌局" />
+</view>

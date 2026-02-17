@@ -1,0 +1,2 @@
+.user-card { display: flex; align-items: center; gap: 24rpx; }
+.nickname { font-size: 36rpx; font-weight: bold; display: block; }

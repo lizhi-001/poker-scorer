@@ -1,0 +1,1 @@
+.actions { margin-top: 32rpx; display: flex; flex-direction: column; gap: 20rpx; }

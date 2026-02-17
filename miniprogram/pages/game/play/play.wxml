@@ -1,0 +1,7 @@
+<view class="container">
+  <view class="card">
+    <van-field label="昵称" placeholder="输入玩家昵称" model:value="{{nickname}}" />
+    <van-field label="初始筹码" type="number" placeholder="输入买入金额" model:value="{{initialChips}}" />
+  </view>
+  <van-button type="primary" block bind:click="onAdd" loading="{{loading}}">确认添加</van-button>
+</view>

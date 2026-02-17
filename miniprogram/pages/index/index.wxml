@@ -1,0 +1,9 @@
+<view class="container">
+  <van-button type="primary" block bind:click="onCreateRoom">创建新牌局</van-button>
+  <view class="room-list" wx:if="{{rooms.length}}">
+    <van-cell-group title="进行中的牌局">
+      <van-cell wx:for="{{rooms}}" wx:key="_id" title="{{item.name}}" label="{{item.playerIds.length}}人 · 盲注 {{item.smallBlind}}/{{item.bigBlind}}" is-link bind:click="onEnterRoom" data-id="{{item._id}}" />
+    </van-cell-group>
+  </view>
+  <van-empty wx:else description="还没有牌局，创建一个吧" />
+</view>

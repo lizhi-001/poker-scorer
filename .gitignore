@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# 微信开发者工具
+miniprogram_npm/
+node_modules/
+project.private.config.json
+
+# npm
+package-lock.json
+
+# TypeScript 编译输出
+miniprogram/**/*.js
+miniprogram/**/*.js.map
+!miniprogram/miniprogram_npm/**/*.js
+
+# 云函数 node_modules
+cloudfunctions/*/node_modules/
+cloudfunctions/*/package-lock.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

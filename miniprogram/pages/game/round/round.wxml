@@ -1,0 +1,11 @@
+<view class="container">
+  <van-cell-group title="输入每位玩家筹码变动">
+    <van-cell wx:for="{{players}}" wx:key="_id" title="{{item.nickname}}">
+      <van-field slot="right-icon" type="digit" placeholder="+/-" data-index="{{index}}" bind:change="onDeltaChange" custom-style="text-align: right; width: 200rpx;" />
+    </van-cell>
+  </van-cell-group>
+  <view class="summary">
+    <text class="{{balanceOk ? 'text-success' : 'text-danger'}}">差额: {{balance}}</text>
+  </view>
+  <van-button type="primary" block bind:click="onConfirm" disabled="{{!balanceOk}}" loading="{{loading}}">确认记录</van-button>
+</view>
