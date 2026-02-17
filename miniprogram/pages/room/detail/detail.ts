@@ -1,4 +1,4 @@
-import { watchRoom, watchPlayers, updateRoomStatus, closeWatcher } from '../../utils/sync'
+import { watchRoom, watchPlayers, updateRoomStatus, closeWatcher } from '../../../utils/sync'
 
 let playerWatcher: any = null
 let roomWatcher: any = null
@@ -86,6 +86,7 @@ Page({
       isCreator: data.creatorId === app.globalData.userStore?.openId,
     })
   },
+
 
   async _fallbackLoadPlayers() {
     const db = wx.cloud.database()
@@ -185,6 +186,7 @@ Page({
       return
     }
   },
+
 
   onStartRound() {
     wx.navigateTo({ url: `/pages/game/round/round?roomId=${this.data.roomId}` })
