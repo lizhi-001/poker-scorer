@@ -1,8 +1,13 @@
 <view class="container">
+  <!-- 冲突提示横幅 -->
+  <van-notice-bar wx:if="{{hasConflict}}" mode="closeable"
+    text="{{conflictMsg}}" bind:close="onDismissConflict"
+    left-icon="warning-o" color="#ed6a0c" background="#fffbe8" />
+
   <van-tabs active="{{activeTab}}" bind:change="onModeChange">
     <van-tab title="简单模式" name="simple">
       <van-cell-group title="输入每位玩家筹码变动">
-        <van-cell wx:for="{{players}}" wx:key="_id" title="{{item.nickname}}">
+        <van-cell wx:for="{{players}}" wx:key="_id" title="{{item.nickname}}" label="当前: {{item.currentChips}}">
           <van-field slot="right-icon" type="digit" placeholder="+/-"
             data-index="{{index}}" bind:change="onDeltaChange"
             custom-style="text-align:right;width:200rpx;" />
@@ -17,7 +22,7 @@
 
     <van-tab title="Side Pot" name="sidepot">
       <van-cell-group title="输入每位玩家下注总额">
-        <van-cell wx:for="{{players}}" wx:key="_id" title="{{item.nickname}}">
+        <van-cell wx:for="{{players}}" wx:key="_id" title="{{item.nickname}}" label="当前: {{item.currentChips}}">
           <van-field slot="right-icon" type="number" placeholder="下注额"
             data-index="{{index}}" bind:change="onBetChange"
             custom-style="text-align:right;width:200rpx;" />

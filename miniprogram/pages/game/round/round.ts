@@ -1,3 +1,5 @@
+import { watchPlayers, detectChipConflicts, closeWatcher } from '../../utils/sync'
+
 interface PotDisplay {
   amount: number
   eligible: string[]
@@ -22,6 +24,8 @@ function calcSidePots(playerBets: Array<{playerId: string; betAmount: number}>) 
   return pots
 }
 
+let playerWatcher: any = null
+
 Page({
   data: {
     roomId: '',
@@ -40,23 +44,74 @@ Page({
     spBalance: 0,
     spReady: false,
     loading: false,
+    // 冲突检测
+    hasConflict: false,
+    conflictMsg: '',
   },
+  /** 记录初始加载时的玩家快照，用于冲突检测 */
+  _baselinePlayers: [] as any[],
 
   onLoad(options: any) {
     this.setData({ roomId: options.roomId || '' })
-    this.loadPlayers()
+    this._startPlayerWatch()
+  },
+  onUnload() {
+    playerWatcher = closeWatcher(playerWatcher)
   },
 
-  async loadPlayers() {
+  _startPlayerWatch() {
+    playerWatcher = closeWatcher(playerWatcher)
+    const roomId = this.data.roomId
+    if (!roomId) return
+    playerWatcher = watchPlayers(
+      roomId,
+      (snapshot: any) => {
+        const activePlayers = (snapshot.docs || []).filter((p: any) => p.isActive)
+        if (this._baselinePlayers.length === 0) {
+          // 首次加载：初始化基线和 UI
+          this._baselinePlayers = activePlayers
+          this.setData({
+            players: activePlayers,
+            deltas: new Array(activePlayers.length).fill(0),
+            bets: new Array(activePlayers.length).fill(0),
+          })
+        } else {
+          // 后续变更：检测冲突
+          const conflicts = detectChipConflicts(this._baselinePlayers, activePlayers)
+          if (conflicts.length > 0) {
+            const names = conflicts.map(c =>
+              `${c.nickname}: ${c.oldChips}→${c.newChips}`
+            ).join('、')
+            this.setData({
+              hasConflict: true,
+              conflictMsg: `筹码已被其他设备修改：${names}`,
+            })
+          }
+          // 更新玩家列表（保持输入状态不变）
+          this.setData({ players: activePlayers })
+        }
+      },
+      () => this._fallbackLoadPlayers(),
+    )
+  },
+
+  async _fallbackLoadPlayers() {
     const db = wx.cloud.database()
     const { data } = await db.collection('players')
       .where({ roomId: this.data.roomId, isActive: true })
       .get()
+    this._baselinePlayers = data
     this.setData({
       players: data,
       deltas: new Array(data.length).fill(0),
       bets: new Array(data.length).fill(0),
     })
+  },
+
+  /** 刷新基线数据（用户确认冲突后） */
+  onDismissConflict() {
+    this._baselinePlayers = [...this.data.players]
+    this.setData({ hasConflict: false, conflictMsg: '' })
   },
 
   onModeChange(e: any) {
@@ -142,6 +197,15 @@ Page({
   },
 
   async onConfirm() {
+    // 提交前再次检查冲突
+    if (this.data.hasConflict) {
+      const { confirm } = await wx.showModal({
+        title: '数据已变更',
+        content: this.data.conflictMsg + '\n确定继续提交吗？',
+      })
+      if (!confirm) return
+    }
+
     this.setData({ loading: true })
     try {
       const db = wx.cloud.database()
@@ -177,6 +241,10 @@ Page({
           }
         }
       }
+      // 更新房间 updatedAt，触发其他端的房间列表刷新
+      await db.collection('rooms').doc(this.data.roomId).update({
+        data: { updatedAt: db.serverDate() },
+      })
       wx.showToast({ title: '记录成功', icon: 'success' })
       wx.navigateBack()
     } catch (err) {
