@@ -1,3 +1,5 @@
+import { userStore } from '../../../store/user'
+
 Page({
   data: {
     name: '',
@@ -20,6 +22,7 @@ Page({
       const { _id } = await db.collection('rooms').add({
         data: {
           name: this.data.name,
+          creatorId: userStore.openId,
           smallBlind: this.data.smallBlind,
           bigBlind: this.data.bigBlind,
           buyIn: this.data.buyIn,

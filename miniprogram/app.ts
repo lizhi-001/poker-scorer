@@ -1,3 +1,6 @@
+import { ensureLogin } from './utils/auth'
+import { userStore } from './store/user'
+
 App({
   onLaunch() {
     if (!wx.cloud) {
@@ -8,10 +11,10 @@ App({
       env: 'YOUR_CLOUD_ENV_ID', // 替换为你的云开发环境 ID
       traceUser: true,
     })
+    ensureLogin()
   },
 
   globalData: {
-    userInfo: null as WechatMiniprogram.UserInfo | null,
-    openId: '',
+    userStore,
   },
 })
