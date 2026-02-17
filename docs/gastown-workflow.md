@@ -319,6 +319,154 @@ bd list --status closed  # 列出已关闭的 issue
 
 ---
 
+## 自动恢复机制深度分析
+
+### Gas Town 代理角色与工作模式
+
+| 角色 | 职责 | 工作模式 | 巡检方式 |
+|------|------|----------|----------|
+| Mayor | 编排者，分配任务，处理异常 | **纯被动** | 只在收到 hook/mail 时响应，无巡检循环 |
+| Witness | 监控 Polecat 健康和进度 | **主动巡检** | `sleep 60` 循环，定期检查所有 Polecat |
+| Refinery | 合并代码到 main | 被动 + 主动 | 有巡检循环，也响应邮件通知 |
+| Deacon | 管理 dogs（辅助工作者） | 被动 | 被 Mayor/Witness 按需唤醒 |
+| Polecat | 执行具体编码任务 | 一次性 | 完成后自动退出 |
+
+### 设计的自动恢复链条
+
+```
+Polecat 异常退出（上下文耗尽/API 限流/崩溃）
+    ↓
+Witness 巡检发现（每 60s 检查 tmux 会话）
+    ↓
+Witness 通过 gt mail 发送异常报告给 Mayor
+    ↓
+Mayor 的 UserPromptSubmit hook 触发，读取邮件
+    ↓
+Mayor 评估后调用 gt sling 重新分配任务
+    ↓
+新 Polecat 在新的 worktree 中继续工作
+```
+
+### 实际观察到的恢复路径（及失败原因）
+
+在本项目的实际开发中，自动恢复走了一条迂回路线：
+
+```
+1. Refinery 拒绝 Polecat 的 MR（检测到会回退已合并代码）✅ 正常
+    ↓
+2. Witness 巡检发现 Polecat 会话停止 ✅ 正常
+    ↓
+3. Witness 尝试联系 Mayor ❌ Mayor 无响应
+    ↓
+4. Witness 转向 Deacon ❌ Deacon 未运行
+    ↓
+5. Witness 自己重启 Deacon ✅ 自愈
+    ↓
+6. Deacon respawn Polecat ✅ 恢复成功
+```
+
+### Mayor 无响应的根本原因
+
+Mayor 启动后的行为：
+1. 检查 hook — 空的
+2. 检查 inbox — 0 条消息
+3. 输出 "Standing by for instructions"
+4. **进入空闲状态，不再主动检查**
+
+问题在于 Mayor 的邮件接收依赖 `UserPromptSubmit` hook：
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [{
+      "command": "gt mail check --inject"
+    }]
+  }
+}
+```
+
+这个 hook 只在有新的 prompt 提交时触发。当 Mayor 空闲（没有活跃的 prompt 输入），即使 Witness 发了邮件，Mayor 也收不到 — 因为没有 prompt 提交来触发 hook。
+
+**这是一个设计上的鸡生蛋问题**：Mayor 需要收到邮件才能行动，但收邮件需要有 prompt 提交，而没有工作时不会有 prompt 提交。
+
+### 实际生效的恢复路径
+
+```
+Witness（主动巡检，唯一有自驱动循环的角色）
+    ↓ 发现 Mayor 无响应
+    ↓ 自己重启 Deacon
+    ↓
+Deacon（被 Witness 唤醒）
+    ↓ respawn 失败的 Polecat
+    ↓
+Polecat 重新工作
+```
+
+Witness 是整个恢复链条中最可靠的角色，因为它有主动巡检循环。
+
+### 并行 Polecat 的 Rebase 冲突（结构性问题）
+
+这不是 bug，而是并行开发的固有代价：
+
+```
+时间线：
+  main ─── A ─── B ─── C (obsidian 合并) ─── D (jasper 合并)
+            \                                    \
+             \── onyx 分支（基于 A）               \── onyx rebase 后
+                修改了 app.ts, detail.ts              只保留 share.ts 的改动
+                这些文件在 C/D 中也被修改
+                → 直接合并会回退 C/D 的改动
+```
+
+Refinery 正确地拒绝了会回退代码的 MR，但自动 rebase + 重新提交的流程需要 Polecat 重新启动来执行，这就回到了上面的恢复链条问题。
+
+### 推荐的完整启动流程
+
+```bash
+# 1. 启动基础设施
+gt dolt start                        # Dolt 数据库
+
+# 2. 添加 Rig（如果还没有）
+gt rig add <name> <url>
+
+# 3. 启动所有代理（顺序重要）
+gt mayor start                       # Mayor（编排者）
+gt witness start <rig>               # Witness（监控）
+gt refinery start <rig>              # Refinery（合并）
+
+# 4. 给 Mayor 一个持续巡检指令（关键！）
+gt nudge mayor "请每 2 分钟检查一次 convoy 进度和 Polecat 状态，发现异常自动 respawn"
+
+# 5. 然后再 sling 任务
+gt sling <issue-id> <rig> --hook-raw-bead
+```
+
+> ⚠️ **关键步骤**：第 4 步的 `gt nudge` 给 Mayor 一个持续的工作指令，
+> 让它进入主动巡检模式而不是被动等待。没有这一步，Mayor 会在空闲后
+> 无法接收 Witness 的异常报告。
+
+### 如果不想依赖 Mayor 的替代方案
+
+```bash
+# 方案 A：人工定期检查
+gt convoy status <id>                # 查看进度
+tmux capture-pane -t ps-witness -p   # 查看 witness 报告
+# 发现异常后手动 sling
+
+# 方案 B：用 Mayor 模式直接编排（最简单）
+gt mayor attach
+# 在 Mayor 会话中用自然语言描述所有需求
+# Mayor 会自己创建 issue、convoy、sling，并持续监控
+# 因为 Mayor 在活跃对话中，UserPromptSubmit hook 正常工作
+
+# 方案 C：只依赖 Witness + Deacon
+# Witness 有自驱动巡检，发现异常会尝试通过 Deacon respawn
+# 确保 Deacon 预先启动：
+gt deacon start                      # 如果有此命令
+```
+
+---
+
 ## 异常恢复手册
 
 ### 异常 1：Polecat 会话退出但 Issue 未关闭
