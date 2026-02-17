@@ -41,13 +41,23 @@ exports.main = async (event, context) => {
   // 计算 side pots
   const pots = calculateSidePots(playerBets)
 
-  // 根据 winners 分配每个 pot
+  // 校验 winners 数量与 pot 数量匹配
+  if (!winners || winners.length < pots.length) {
+    return { errCode: 'INVALID_WINNERS', errMsg: `需要 ${pots.length} 个赢家，实际提供 ${(winners || []).length} 个` }
+  }
+
+  // 根据 winners 分配每个 pot，校验赢家资格
   const changes = {}
-  pots.forEach((pot, index) => {
-    const winnerId = winners[index] || winners[0]
+  for (let i = 0; i < pots.length; i++) {
+    const pot = pots[i]
+    const winnerId = winners[i]
+    if (!pot.eligible.includes(winnerId)) {
+      return { errCode: 'INELIGIBLE_WINNER', errMsg: `赢家 ${winnerId} 无资格赢得底池 ${i + 1}` }
+    }
     if (!changes[winnerId]) changes[winnerId] = 0
     changes[winnerId] += pot.amount
-  })
+    pot.winnerId = winnerId
+  }
 
   // 减去每个玩家的投入
   playerBets.forEach(({ playerId, betAmount }) => {
