@@ -7,7 +7,8 @@ Page({
     joinCode: '',
     joinLoading: false,
   },
-  onShow() {
+  async onShow() {
+    await getApp().globalData.loginReady
     this._startWatch()
   },
   onHide() {

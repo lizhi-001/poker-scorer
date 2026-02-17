@@ -1,4 +1,4 @@
-import { watchPlayers, closeWatcher, updateRoomStatus } from '../../utils/sync'
+import { watchPlayers, closeWatcher, updateRoomStatus } from '../../../utils/sync'
 
 let playerWatcher: any = null
 

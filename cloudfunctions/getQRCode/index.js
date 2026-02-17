@@ -7,8 +7,9 @@ exports.main = async (event, context) => {
   try {
     // 生成小程序码
     const result = await cloud.openapi.wxacode.getUnlimited({
-      scene: `roomId=${roomId}`,
+      scene: roomId,
       page: 'pages/room/detail/detail',
+      checkPath: false,
       width: 280,
       autoColor: false,
       lineColor: { r: 233, g: 69, b: 96 },

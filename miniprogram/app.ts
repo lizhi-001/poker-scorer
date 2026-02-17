@@ -11,14 +11,11 @@ App({
       env: 'cloud1-4gm99qrd8397ea37',
       traceUser: true,
     })
-    ensureLogin()
-    // 扫码进入：scene 格式 roomId=xxx
+    this.globalData.loginReady = ensureLogin()
+    // 扫码进入：scene 即 roomId
     if (options?.query?.scene) {
       const scene = decodeURIComponent(options.query.scene)
-      const match = scene.match(/roomId=([^&]+)/)
-      if (match) {
-        this.globalData.pendingRoomId = match[1]
-      }
+      this.globalData.pendingRoomId = scene
     }
   },
 
@@ -33,5 +30,6 @@ App({
   globalData: {
     userStore,
     pendingRoomId: '',
+    loginReady: Promise.resolve() as Promise<void>,
   },
 })

@@ -33,18 +33,29 @@
     "minifyWXSS": true,
     "showES6CompileOption": false,
     "minifyWXML": true,
+    "useCompilerPlugins": [
+      "typescript"
+    ],
     "babelSetting": {
       "ignore": [],
       "disablePlugins": [],
       "outputPath": ""
-    }
+    },
+    "compileWorklet": false,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true
   },
   "compileType": "miniprogram",
-  "libVersion": "3.3.4",
+  "libVersion": "3.14.2",
   "appid": "wx701fa763b504ded1",
   "projectname": "poker-scorer",
   "condition": {},
-  "srcMiniprogramRoot": "miniprogram/",
+  "miniprogramRoot": "miniprogram/",
   "cloudfunctionRoot": "cloudfunctions/",
-  "cloudfunctionTemplateRoot": ""
+  "cloudfunctionTemplateRoot": "",
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {}
 }
