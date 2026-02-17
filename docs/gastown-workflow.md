@@ -150,6 +150,56 @@ bd config set issue_prefix gt
 
 ## 开发编排流程
 
+### 0. 启动 Mayor（关键步骤，不可跳过）
+
+> ⚠️ **这是最容易遗漏但最重要的步骤。** 没有 Mayor，整个自动恢复链条会断裂。
+
+```bash
+gt mayor attach
+```
+
+Mayor 是 Gas Town 的核心编排者，负责：
+- 接收 Witness 的异常报告并自动 respawn 失败的 Polecat
+- 监控 Convoy 整体进度
+- 协调 Refinery 合并冲突
+- 在所有任务完成后汇报结果
+
+**Gas Town 自动恢复链条：**
+
+```
+Polecat 异常退出（上下文耗尽/网络中断/API 限流）
+    ↓
+Witness 巡检发现（每 60s 检查 tmux 会话状态）
+    ↓
+Witness 通过 gt mail 发送异常报告给 Mayor
+    ↓
+Mayor 评估后自动调用 gt sling 重新分配任务
+    ↓
+新 Polecat 在新的 worktree 中继续工作
+```
+
+**如果没有 Mayor 会怎样：**
+- Witness 能发现问题，能做有限补救（如帮 Polecat 手动提交 MR）
+- 但 Witness 没有权限 respawn Polecat — 那是 Mayor 的职责
+- Witness 日志会反复出现 "cannot reach mayor" 的警告
+- 失败的任务需要人工手动 `gt sling` 重新分配
+
+**启动顺序建议：**
+
+```bash
+# 1. 先启动 Mayor（编排者）
+gt mayor attach
+# Ctrl+B D 退出观察（Mayor 继续在后台运行）
+
+# 2. Witness 和 Refinery 会在 gt rig add 时自动启动
+# 如果没有，手动启动：
+gt witness start <rig_name>
+gt refinery start <rig_name>
+
+# 3. 然后再 sling 任务
+gt sling <issue-id> <rig_name> --hook-raw-bead
+```
+
 ### 1. 创建 Issue
 
 ```bash
@@ -565,3 +615,26 @@ git diff main..<branch> -- <specific-file>
 # 查看提交信息
 git log main..<branch> --oneline
 ```
+
+### 11. 必须先启动 Mayor 再 sling
+
+这是本次开发中最大的教训。没有 Mayor：
+- Witness 发现 Polecat 异常后无法自动 respawn
+- 合并冲突无法自动协调
+- 失败任务需要人工介入
+
+正确顺序：`gt mayor attach` → `gt sling`
+
+### 12. Witness 的能力边界
+
+Witness 能做的：
+- 检测 Polecat 会话是否存活
+- 检查 git 分支和提交状态
+- 帮 Polecat 手动提交 MR（如果 Polecat 忘了）
+- 记录状态到 state.json
+
+Witness 不能做的：
+- 重新 sling / respawn Polecat（需要 Mayor）
+- 解决合并冲突（需要 Refinery 或人工）
+- 修改代码（只有 Polecat 可以）
+
