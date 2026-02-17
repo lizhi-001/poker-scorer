@@ -66,6 +66,7 @@
   <view class="actions" wx:elif="{{room.status === 'active'}}">
     <van-button type="info" block bind:click="onAddPlayer">添加玩家</van-button>
     <van-button type="primary" block bind:click="onStartRound" disabled="{{players.length < 2}}">记录一手牌</van-button>
+    <van-button plain type="info" block bind:click="onViewRounds">查看手牌历史</van-button>
     <van-button type="warning" block bind:click="onSettle">结算牌局</van-button>
   </view>
 

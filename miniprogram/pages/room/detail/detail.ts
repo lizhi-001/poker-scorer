@@ -146,6 +146,9 @@ Page({
   onStartRound() {
     wx.navigateTo({ url: `/pages/game/round/round?roomId=${this.data.roomId}` })
   },
+  onViewRounds() {
+    wx.navigateTo({ url: `/pages/stats/rounds/rounds?roomId=${this.data.roomId}` })
+  },
   onSettle() {
     wx.navigateTo({ url: `/pages/stats/summary/summary?roomId=${this.data.roomId}` })
   },

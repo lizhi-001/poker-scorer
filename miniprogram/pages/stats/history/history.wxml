@@ -1,6 +1,46 @@
 <view class="container">
-  <van-cell-group wx:if="{{rooms.length}}">
-    <van-cell wx:for="{{rooms}}" wx:key="_id" title="{{item.name}}" label="{{item.playerIds.length}}人 · 盲注 {{item.smallBlind}}/{{item.bigBlind}}" is-link bind:click="onTap" data-id="{{item._id}}" />
-  </van-cell-group>
+  <van-search
+    value="{{keyword}}"
+    placeholder="搜索房间名或房间号"
+    bind:change="onSearch"
+    shape="round"
+  />
+
+  <van-dropdown-menu active-color="#e94560">
+    <van-dropdown-item
+      value="{{dateFilter}}"
+      options="{{dateOptions}}"
+      bind:change="onDateChange"
+    />
+    <van-dropdown-item
+      value="{{profitFilter}}"
+      options="{{profitOptions}}"
+      bind:change="onProfitChange"
+    />
+  </van-dropdown-menu>
+
+  <view class="room-list" wx:if="{{rooms.length}}">
+    <view class="room-card" wx:for="{{rooms}}" wx:key="_id"
+      bind:tap="onTap" data-id="{{item._id}}">
+      <view class="room-top">
+        <text class="room-name">{{item.name}}</text>
+        <text class="room-date">{{item.dateStr}}</text>
+      </view>
+      <view class="room-bottom">
+        <text class="room-info">
+          {{item.playerIds.length}}人 · 盲注 {{item.smallBlind}}/{{item.bigBlind}}
+        </text>
+        <view wx:if="{{item.myProfit !== null}}" class="profit-tag">
+          <van-tag
+            type="{{item.myProfit >= 0 ? 'success' : 'danger'}}"
+            size="medium"
+          >
+            {{item.profitSign}}{{item.myProfit}}
+          </van-tag>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <van-empty wx:else description="暂无历史牌局" />
 </view>

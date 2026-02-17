@@ -1,0 +1,29 @@
+.container { padding: 20rpx; }
+.round-card {
+  background: #fff; border-radius: 16rpx; padding: 24rpx;
+  margin-bottom: 20rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
+}
+.round-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16rpx; padding-bottom: 12rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.round-num { font-size: 30rpx; font-weight: 600; color: #333; }
+.round-time { font-size: 24rpx; color: #999; }
+.changes-section { margin-bottom: 12rpx; }
+.change-row {
+  display: flex; justify-content: space-between;
+  padding: 8rpx 0; font-size: 28rpx;
+}
+.player-name { color: #333; }
+.delta { font-weight: 600; }
+.positive { color: #07c160; }
+.negative { color: #e94560; }
+.pots-section {
+  padding-top: 12rpx; border-top: 1rpx solid #f0f0f0;
+}
+.pot-row {
+  display: flex; align-items: center; gap: 16rpx;
+  padding: 8rpx 0; font-size: 26rpx;
+}
+.pot-detail { color: #666; }

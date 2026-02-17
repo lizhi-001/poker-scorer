@@ -1,0 +1,16 @@
+.container { padding-bottom: 20rpx; }
+.room-list { padding: 0 20rpx; }
+.room-card {
+  background: #fff; border-radius: 16rpx; padding: 24rpx;
+  margin-top: 20rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
+}
+.room-top {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12rpx;
+}
+.room-name { font-size: 30rpx; font-weight: 600; color: #333; }
+.room-date { font-size: 24rpx; color: #999; }
+.room-bottom {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.room-info { font-size: 26rpx; color: #666; }

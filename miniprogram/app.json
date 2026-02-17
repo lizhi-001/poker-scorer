@@ -7,6 +7,7 @@
     "pages/game/round/round",
     "pages/stats/summary/summary",
     "pages/stats/history/history",
+    "pages/stats/rounds/rounds",
     "pages/settlement/share/share",
     "pages/profile/profile"
   ],
