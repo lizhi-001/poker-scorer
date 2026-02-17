@@ -17,7 +17,7 @@ Page({
     this.setData({ loading: true })
     try {
       const db = wx.cloud.database()
-      await db.collection('players').add({
+      const { _id } = await db.collection('players').add({
         data: {
           roomId,
           nickname: nickname.trim(),
@@ -26,6 +26,16 @@ Page({
           buyInCount: 1,
           totalBuyIn: Number(initialChips),
           isActive: true,
+          createdAt: db.serverDate(),
+        },
+      })
+      // 创建首次买入记录
+      await db.collection('buyins').add({
+        data: {
+          roomId,
+          playerId: _id,
+          amount: Number(initialChips),
+          createdAt: db.serverDate(),
         },
       })
       wx.navigateBack()

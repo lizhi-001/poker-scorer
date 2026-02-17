@@ -80,6 +80,15 @@ export interface User {
   lastLoginAt: Date
 }
 
+/** 买入记录 */
+export interface BuyInRecord {
+  _id: string
+  roomId: string
+  playerId: string
+  amount: number
+  createdAt: Date
+}
+
 /** Side Pot 计算输入 */
 export interface PlayerBet {
   playerId: string
