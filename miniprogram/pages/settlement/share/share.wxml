@@ -1,6 +1,9 @@
 <view class="container">
-  <canvas canvas-id="shareCanvas" class="share-canvas" style="width: 600rpx; height: 800rpx;"></canvas>
-  <view class="actions">
+  <view class="canvas-wrap">
+    <canvas type="2d" id="shareCanvas" class="share-canvas"></canvas>
+  </view>
+  <view wx:if="{{loading}}" class="loading-tip">正在生成结算图...</view>
+  <view wx:if="{{!loading}}" class="actions">
     <van-button type="primary" block bind:click="onSave">保存到相册</van-button>
     <van-button type="info" block open-type="share">分享给好友</van-button>
   </view>
