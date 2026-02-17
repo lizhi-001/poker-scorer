@@ -1,4 +1,7 @@
+import { watchRoom, watchPlayers, updateRoomStatus, closeWatcher } from '../../utils/sync'
+
 let playerWatcher: any = null
+let roomWatcher: any = null
 
 Page({
   data: {
@@ -10,20 +13,68 @@ Page({
     showBuyInDialog: false,
     isCreator: false,
   },
-  _watcher: null as any,
 
   onLoad(options) {
     this.setData({ roomId: options.id || '' })
   },
   onShow() {
-    this.loadRoom()
+    this._startRoomWatch()
     this._startPlayerWatch()
   },
   onHide() {
-    this._stopPlayerWatch()
+    this._stopAllWatchers()
   },
   onUnload() {
-    this._stopPlayerWatch()
+    this._stopAllWatchers()
+  },
+
+  _startRoomWatch() {
+    roomWatcher = closeWatcher(roomWatcher)
+    const roomId = this.data.roomId
+    if (!roomId) return
+    this.loadRoom()
+    roomWatcher = watchRoom(
+      roomId,
+      (snapshot: any) => {
+        const room = snapshot.docs[0]
+        if (!room) return
+        const app = getApp()
+        const prevStatus = this.data.room.status
+        this.setData({
+          room,
+          isCreator: room.creatorId === app.globalData.userStore?.openId,
+        })
+        if (prevStatus && prevStatus !== room.status) {
+          const msgs: Record<string, string> = {
+            active: '牌局已开始',
+            settled: '牌局已结算',
+            archived: '牌局已归档',
+          }
+          if (msgs[room.status]) {
+            wx.showToast({ title: msgs[room.status], icon: 'none' })
+          }
+        }
+      },
+      () => this.loadRoom(),
+    )
+  },
+
+  _startPlayerWatch() {
+    playerWatcher = closeWatcher(playerWatcher)
+    const roomId = this.data.roomId
+    if (!roomId) return
+    playerWatcher = watchPlayers(
+      roomId,
+      (snapshot: any) => {
+        this.setData({ players: snapshot.docs })
+      },
+      () => this._fallbackLoadPlayers(),
+    )
+  },
+
+  _stopAllWatchers() {
+    roomWatcher = closeWatcher(roomWatcher)
+    playerWatcher = closeWatcher(playerWatcher)
   },
 
   async loadRoom() {
@@ -35,27 +86,7 @@ Page({
       isCreator: data.creatorId === app.globalData.userStore?.openId,
     })
   },
-  _startPlayerWatch() {
-    this._stopPlayerWatch()
-    const db = wx.cloud.database()
-    playerWatcher = db.collection('players')
-      .where({ roomId: this.data.roomId })
-      .watch({
-        onChange: (snapshot: any) => {
-          this.setData({ players: snapshot.docs })
-        },
-        onError: (err: any) => {
-          console.error('player watch error', err)
-          this._fallbackLoadPlayers()
-        },
-      })
-  },
-  _stopPlayerWatch() {
-    if (playerWatcher) {
-      playerWatcher.close()
-      playerWatcher = null
-    }
-  },
+
   async _fallbackLoadPlayers() {
     const db = wx.cloud.database()
     const { data } = await db.collection('players')
@@ -122,6 +153,10 @@ Page({
       await db.collection('buyins').add({
         data: { roomId, playerId: buyInPlayerId, amount, createdAt: db.serverDate() },
       })
+      // 触发房间 updatedAt 更新，让其他端感知变化
+      await db.collection('rooms').doc(roomId).update({
+        data: { updatedAt: db.serverDate() },
+      })
       this.setData({ showBuyInDialog: false, buyInPlayerId: '', buyInAmount: '' })
       wx.showToast({ title: '买入成功', icon: 'success' })
     } catch (err) {
@@ -132,17 +167,25 @@ Page({
   onAddPlayer() {
     wx.navigateTo({ url: `/pages/game/play/play?roomId=${this.data.roomId}` })
   },
+
+  /** 开始游戏 - 使用乐观锁防止多端冲突 */
   async onStartGame() {
     if (this.data.players.length < 2) {
       wx.showToast({ title: '至少需要2名玩家', icon: 'none' })
       return
     }
-    const db = wx.cloud.database()
-    await db.collection('rooms').doc(this.data.roomId).update({
-      data: { status: 'active', updatedAt: db.serverDate() },
-    })
-    this.loadRoom()
+    const ok = await updateRoomStatus(
+      this.data.roomId,
+      'active',
+      this.data.room._version,
+    )
+    if (!ok) {
+      wx.showToast({ title: '操作冲突，请刷新重试', icon: 'none' })
+      this.loadRoom()
+      return
+    }
   },
+
   onStartRound() {
     wx.navigateTo({ url: `/pages/game/round/round?roomId=${this.data.roomId}` })
   },

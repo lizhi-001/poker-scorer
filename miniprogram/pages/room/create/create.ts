@@ -70,6 +70,7 @@ Page({
           buyIn,
           status: 'waiting' as const,
           playerIds: [],
+          _version: 0,
           createdAt: db.serverDate(),
           updatedAt: db.serverDate(),
         },
