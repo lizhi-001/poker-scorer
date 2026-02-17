@@ -9,6 +9,7 @@ export interface Room {
   buyIn: number
   status: 'waiting' | 'active' | 'settled' | 'archived'
   playerIds: string[]
+  dealerOpenId?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -36,6 +37,14 @@ export interface Round {
   pots: Pot[]
   timestamp: Date
   operatorId: string
+  /** 多轮下注快照（可选，向后兼容） */
+  streetBets?: {
+    preflop: Record<string, number>
+    flop?: Record<string, number>
+    turn?: Record<string, number>
+    river?: Record<string, number>
+  }
+  dealerOpenId?: string
 }
 
 /** 玩家筹码变动 */

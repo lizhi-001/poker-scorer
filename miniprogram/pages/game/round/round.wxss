@@ -13,3 +13,58 @@
 .win-radio { margin-right: 24rpx; margin-bottom: 8rpx; }
 .auto-win { font-size: 28rpx; color: #07c160; }
 .changes-section { margin-top: 24rpx; }
+
+/* 街道指示器 */
+.street-indicator {
+  display: flex;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  background: #fff;
+  margin-bottom: 2rpx;
+}
+.street-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+.street-dot {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+.street-name { font-size: 22rpx; }
+.street-active .street-dot { background: #1989fa; color: #fff; }
+.street-active .street-name { color: #1989fa; font-weight: bold; }
+.street-done .street-dot { background: #07c160; color: #fff; }
+.street-done .street-name { color: #07c160; }
+.street-future .street-dot { background: #eee; color: #999; }
+.street-future .street-name { color: #999; }
+
+/* 弃牌相关 */
+.bet-row-folded { opacity: 0.5; }
+.bet-right { display: flex; align-items: center; gap: 12rpx; }
+.fold-text { font-size: 26rpx; color: #ee0a24; margin-right: 12rpx; }
+
+/* 街道导航 */
+.street-nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 20rpx 32rpx;
+}
+
+/* 全员弃牌提示 */
+.all-fold-notice {
+  text-align: center;
+  padding: 24rpx;
+  background: #f0f9eb;
+  color: #07c160;
+  font-size: 28rpx;
+  font-weight: 500;
+}

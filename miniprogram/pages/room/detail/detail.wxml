@@ -7,9 +7,12 @@
       </van-tag>
     </view>
     <view class="room-info">盲注 {{room.smallBlind}}/{{room.bigBlind}} · 买入 {{room.buyIn}}</view>
-    <view class="room-code" wx:if="{{room.roomCode}}" bind:tap="onCopyRoomCode">
-      房间号: <text class="code-text">{{room.roomCode}}</text>
-      <text class="copy-hint">点击复制</text>
+    <view class="room-code" wx:if="{{room.roomCode}}">
+      <view bind:tap="onCopyRoomCode">
+        房间号: <text class="code-text">{{room.roomCode}}</text>
+        <text class="copy-hint">点击复制</text>
+      </view>
+      <van-icon name="qr" size="40rpx" color="#e94560" bind:click="onShowQRCode" custom-style="margin-left:16rpx;" />
     </view>
   </view>
 
@@ -23,7 +26,11 @@
     >
       <view class="player-card">
         <view class="player-main">
-          <view class="player-name">{{item.nickname}}</view>
+          <view class="player-name-row">
+            <text class="player-name">{{item.nickname}}</text>
+            <text wx:if="{{positionMap[item.openId]}}" class="position-tag position-{{positionMap[item.openId] === 'D' || positionMap[item.openId] === 'D/SB' ? 'dealer' : positionMap[item.openId] === 'SB' ? 'sb' : 'bb'}}">{{positionMap[item.openId]}}</text>
+            <view wx:if="{{room.status === 'active' && !positionMap[item.openId]}}" class="dealer-btn" data-openid="{{item.openId}}" bind:tap="onSetDealer">D</view>
+          </view>
           <view class="player-chips">
             <text class="chips-value">{{item.currentChips}}</text>
             <text class="chips-label">筹码</text>
@@ -92,4 +99,16 @@
       bind:change="onBuyInAmountChange"
     />
   </van-dialog>
+
+  <!-- 二维码弹窗 -->
+  <van-popup show="{{showQRCode}}" round closeable position="bottom" bind:close="onCloseQRCode">
+    <view class="qr-popup">
+      <view class="qr-title">扫码加入房间</view>
+      <view class="qr-body">
+        <van-loading wx:if="{{qrLoading}}" size="48rpx" />
+        <image wx:elif="{{qrCodeUrl}}" src="{{qrCodeUrl}}" class="qr-image" mode="aspectFit" show-menu-by-longpress="{{true}}" />
+      </view>
+      <van-button type="primary" size="small" block bind:click="onSaveQRCode" disabled="{{!qrCodeUrl}}">保存到相册</van-button>
+    </view>
+  </van-popup>
 </view>

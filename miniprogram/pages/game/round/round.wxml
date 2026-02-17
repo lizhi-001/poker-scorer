@@ -21,13 +21,46 @@
     </van-tab>
 
     <van-tab title="Side Pot" name="sidepot">
-      <van-cell-group title="输入每位玩家下注总额">
-        <van-cell wx:for="{{players}}" wx:key="_id" title="{{item.nickname}}" label="当前: {{item.currentChips}}">
-          <van-field slot="right-icon" type="number" placeholder="下注额"
-            data-index="{{index}}" bind:change="onBetChange"
-            custom-style="text-align:right;width:200rpx;" />
-        </van-cell>
+      <!-- 街道指示器 -->
+      <view class="street-indicator">
+        <view wx:for="{{streets}}" wx:key="*this"
+          class="street-step {{index < currentStreetIdx ? 'street-done' : index === currentStreetIdx ? 'street-active' : 'street-future'}}">
+          <text class="street-dot">{{index < currentStreetIdx ? '✓' : index + 1}}</text>
+          <text class="street-name">{{streetLabels[item]}}</text>
+        </view>
+      </view>
+
+      <!-- 所有人弃牌只剩一人 -->
+      <view wx:if="{{allFoldedExceptOne}}" class="all-fold-notice">
+        <text>所有人弃牌，{{lastPlayerName}} 赢得底池</text>
+      </view>
+
+      <van-cell-group title="{{streetLabels[currentStreet]}} — 输入下注额">
+        <view wx:for="{{players}}" wx:key="_id" class="bet-row {{folded[index] ? 'bet-row-folded' : ''}}">
+          <van-cell title="{{item.nickname}}" label="当前: {{item.currentChips}}">
+            <view slot="right-icon" class="bet-right">
+              <van-field wx:if="{{!folded[index]}}" type="number" placeholder="下注额"
+                value="{{bets[index] || ''}}"
+                data-index="{{index}}" bind:change="onBetChange"
+                custom-style="text-align:right;width:160rpx;" />
+              <text wx:if="{{folded[index]}}" class="fold-text">已弃牌 ({{bets[index]}})</text>
+              <van-button wx:if="{{!folded[index]}}" size="mini" type="danger" plain
+                data-index="{{index}}" bind:click="onFold">弃牌</van-button>
+              <van-button wx:if="{{folded[index]}}" size="mini" type="info" plain
+                data-index="{{index}}" bind:click="onUnfold">恢复</van-button>
+            </view>
+          </van-cell>
+        </view>
       </van-cell-group>
+
+      <!-- 街道导航按钮 -->
+      <view class="street-nav">
+        <van-button wx:if="{{currentStreetIdx > 0}}" size="small" plain
+          bind:click="onPrevStreet">上一轮</van-button>
+        <view wx:else></view>
+        <van-button wx:if="{{currentStreetIdx < 3 && !allFoldedExceptOne}}" size="small" type="info"
+          bind:click="onNextStreet">下一轮 →</van-button>
+      </view>
 
       <view wx:if="{{pots.length > 0}}" class="pots-section">
         <van-cell-group title="底池分配 — 选择每个底池赢家">
@@ -73,7 +106,7 @@
       </view>
 
       <van-button type="primary" block bind:click="onConfirm"
-        disabled="{{!spReady}}" loading="{{loading}}">确认记录</van-button>
+        disabled="{{!spReady && !allFoldedExceptOne}}" loading="{{loading}}">确认记录</van-button>
     </van-tab>
   </van-tabs>
 </view>

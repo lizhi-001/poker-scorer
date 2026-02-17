@@ -1,4 +1,4 @@
-import { watchRoom, watchPlayers, updateRoomStatus, closeWatcher } from '../../utils/sync'
+import { watchRoom, watchPlayers, updateRoomStatus, closeWatcher } from '../../../utils/sync'
 
 let playerWatcher: any = null
 let roomWatcher: any = null
@@ -12,12 +12,19 @@ Page({
     buyInPlayerId: '',
     showBuyInDialog: false,
     isCreator: false,
+    // QR code
+    showQRCode: false,
+    qrCodeUrl: '',
+    qrLoading: false,
+    // 庄家/位置标签: openId -> 'D' | 'SB' | 'BB' | ''
+    positionMap: {} as Record<string, string>,
   },
 
   onLoad(options) {
     this.setData({ roomId: options.id || '' })
   },
-  onShow() {
+  async onShow() {
+    await getApp().globalData.loginReady
     this._startRoomWatch()
     this._startPlayerWatch()
   },
@@ -44,6 +51,7 @@ Page({
           room,
           isCreator: room.creatorId === app.globalData.userStore?.openId,
         })
+        this._updatePositions()
         if (prevStatus && prevStatus !== room.status) {
           const msgs: Record<string, string> = {
             active: '牌局已开始',
@@ -67,6 +75,7 @@ Page({
       roomId,
       (snapshot: any) => {
         this.setData({ players: snapshot.docs })
+        this._updatePositions()
       },
       () => this._fallbackLoadPlayers(),
     )
@@ -77,6 +86,36 @@ Page({
     playerWatcher = closeWatcher(playerWatcher)
   },
 
+  /** 根据庄家位置计算 D/SB/BB 标签 */
+  _updatePositions() {
+    const { room, players } = this.data
+    const dealerOpenId = room?.dealerOpenId
+    const active = players.filter((p: any) => p.isActive !== false)
+    const positionMap: Record<string, string> = {}
+    if (!dealerOpenId || active.length < 2) {
+      this.setData({ positionMap })
+      return
+    }
+    const ids = active.map((p: any) => p.openId)
+    const dIdx = ids.indexOf(dealerOpenId)
+    if (dIdx === -1) {
+      this.setData({ positionMap })
+      return
+    }
+    positionMap[dealerOpenId] = 'D'
+    if (active.length === 2) {
+      // heads-up: 庄家=小盲，对手=大盲
+      positionMap[ids[(dIdx + 1) % ids.length]] = 'BB'
+      positionMap[dealerOpenId] = 'D/SB'
+    } else {
+      const sbIdx = (dIdx + 1) % ids.length
+      const bbIdx = (dIdx + 2) % ids.length
+      positionMap[ids[sbIdx]] = 'SB'
+      positionMap[ids[bbIdx]] = 'BB'
+    }
+    this.setData({ positionMap })
+  },
+
   async loadRoom() {
     const db = wx.cloud.database()
     const { data } = await db.collection('rooms').doc(this.data.roomId).get() as any
@@ -85,6 +124,7 @@ Page({
       room: data,
       isCreator: data.creatorId === app.globalData.userStore?.openId,
     })
+    this._updatePositions()
   },
 
   async _fallbackLoadPlayers() {
@@ -94,6 +134,7 @@ Page({
       .orderBy('createdAt', 'asc')
       .get()
     this.setData({ players: data })
+    this._updatePositions()
   },
 
   /** 移除玩家 */
@@ -187,7 +228,38 @@ Page({
   },
 
   onStartRound() {
-    wx.navigateTo({ url: `/pages/game/round/round?roomId=${this.data.roomId}` })
+    const { roomId, room, players } = this.data
+    const dealerOpenId = room.dealerOpenId || ''
+    const sb = room.smallBlind || 0
+    const bb = room.bigBlind || 0
+    const playerOrder = players.filter((p: any) => p.isActive !== false).map((p: any) => p.openId)
+    wx.navigateTo({
+      url: `/pages/game/round/round?roomId=${roomId}&dealerOpenId=${dealerOpenId}&smallBlind=${sb}&bigBlind=${bb}&playerOrder=${playerOrder.join(',')}`,
+    })
+    // 自动轮转庄家到下一位活跃玩家
+    if (dealerOpenId && playerOrder.length >= 2) {
+      const curIdx = playerOrder.indexOf(dealerOpenId)
+      const nextIdx = (curIdx + 1) % playerOrder.length
+      const nextDealer = playerOrder[nextIdx]
+      const db = wx.cloud.database()
+      db.collection('rooms').doc(roomId).update({
+        data: { dealerOpenId: nextDealer, updatedAt: db.serverDate() },
+      })
+    }
+  },
+
+  /** 设置庄家 */
+  async onSetDealer(e: any) {
+    const openId = e.currentTarget.dataset.openid
+    if (!openId) return
+    try {
+      const db = wx.cloud.database()
+      await db.collection('rooms').doc(this.data.roomId).update({
+        data: { dealerOpenId: openId, updatedAt: db.serverDate() },
+      })
+    } catch (err) {
+      wx.showToast({ title: '设置庄家失败', icon: 'none' })
+    }
   },
   onViewRounds() {
     wx.navigateTo({ url: `/pages/stats/rounds/rounds?roomId=${this.data.roomId}` })
@@ -204,6 +276,47 @@ Page({
   onShareRoom() {
     wx.showShareMenu({ withShareTicket: true })
   },
+  /** 显示二维码弹窗 */
+  async onShowQRCode() {
+    if (this.data.qrCodeUrl) {
+      this.setData({ showQRCode: true })
+      return
+    }
+    this.setData({ qrLoading: true, showQRCode: true })
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'getQRCode',
+        data: { roomId: this.data.roomId },
+      }) as any
+      const fileID = res.result.fileID
+      const { fileList } = await wx.cloud.getTempFileURL({ fileList: [fileID] })
+      const url = fileList[0]?.tempFileURL || ''
+      this.setData({ qrCodeUrl: url, qrLoading: false })
+    } catch (err) {
+      this.setData({ qrLoading: false, showQRCode: false })
+      wx.showToast({ title: '获取二维码失败', icon: 'none' })
+    }
+  },
+  onCloseQRCode() {
+    this.setData({ showQRCode: false })
+  },
+  /** 保存二维码到相册 */
+  async onSaveQRCode() {
+    const url = this.data.qrCodeUrl
+    if (!url) return
+    try {
+      const { tempFilePath } = await wx.downloadFile({ url })
+      await wx.saveImageToPhotosAlbum({ filePath: tempFilePath })
+      wx.showToast({ title: '已保存到相册', icon: 'success' })
+    } catch (err: any) {
+      if (err?.errMsg?.includes('auth deny')) {
+        wx.showToast({ title: '请授权相册权限', icon: 'none' })
+      } else {
+        wx.showToast({ title: '保存失败', icon: 'none' })
+      }
+    }
+  },
+
   onShareAppMessage() {
     return {
       title: `来加入「${this.data.room.name}」`,
