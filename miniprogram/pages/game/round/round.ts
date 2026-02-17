@@ -72,6 +72,7 @@ Page({
     smallBlind: 0,
     bigBlind: 0,
     playerOrder: [] as string[],
+    positionLabels: [] as string[],  // 每个玩家的位置标签 D/SB/BB
   },
   /** 记录初始加载时的玩家快照，用于冲突检测 */
   _baselinePlayers: [] as any[],
@@ -146,27 +147,42 @@ Page({
   /** 根据庄家位置自动预填大小盲注到 Side Pot 模式 */
   _prefillBlinds(players: any[]) {
     const { dealerOpenId, smallBlind, bigBlind, playerOrder } = this.data
-    if (!dealerOpenId || !smallBlind || !bigBlind || playerOrder.length < 2) return
+    if (!dealerOpenId || playerOrder.length < 2) return
     const ids = players.map((p: any) => p.openId || p._id)
     const dIdx = playerOrder.indexOf(dealerOpenId)
     if (dIdx === -1) return
+
+    // 计算位置标签
+    const positionLabels = new Array(players.length).fill('')
+    const dPlayerIdx = ids.indexOf(dealerOpenId)
 
     let sbId: string, bbId: string
     if (playerOrder.length === 2) {
       // heads-up: 庄家=小盲
       sbId = dealerOpenId
       bbId = playerOrder[(dIdx + 1) % playerOrder.length]
+      if (dPlayerIdx !== -1) positionLabels[dPlayerIdx] = 'D/SB'
+      const bbPlayerIdx = ids.indexOf(bbId)
+      if (bbPlayerIdx !== -1) positionLabels[bbPlayerIdx] = 'BB'
     } else {
       sbId = playerOrder[(dIdx + 1) % playerOrder.length]
       bbId = playerOrder[(dIdx + 2) % playerOrder.length]
+      if (dPlayerIdx !== -1) positionLabels[dPlayerIdx] = 'D'
+      const sbPlayerIdx = ids.indexOf(sbId)
+      const bbPlayerIdx = ids.indexOf(bbId)
+      if (sbPlayerIdx !== -1) positionLabels[sbPlayerIdx] = 'SB'
+      if (bbPlayerIdx !== -1) positionLabels[bbPlayerIdx] = 'BB'
     }
 
+    // 预填盲注
     const bets = [...this.data.bets]
-    const sbIdx = ids.indexOf(sbId)
-    const bbIdx = ids.indexOf(bbId)
-    if (sbIdx !== -1) bets[sbIdx] = smallBlind
-    if (bbIdx !== -1) bets[bbIdx] = bigBlind
-    this.setData({ bets })
+    if (smallBlind && bigBlind) {
+      const sbIdx = ids.indexOf(sbId)
+      const bbIdx = ids.indexOf(bbId)
+      if (sbIdx !== -1) bets[sbIdx] = smallBlind
+      if (bbIdx !== -1) bets[bbIdx] = bigBlind
+    }
+    this.setData({ bets, positionLabels })
   },
 
   /* ---- 多轮下注 (Street) ---- */

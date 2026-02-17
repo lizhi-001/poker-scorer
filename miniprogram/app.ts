@@ -8,7 +8,7 @@ App({
       return
     }
     wx.cloud.init({
-      env: 'cloud1-4gm99qrd8397ea37',
+      env: 'your-cloud-env-id',  // 替换为你的云开发环境 ID
       traceUser: true,
     })
     this.globalData.loginReady = ensureLogin()

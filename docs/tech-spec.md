@@ -582,7 +582,7 @@ class UserStore {
 {
   "miniprogramRoot": "miniprogram/",
   "cloudfunctionRoot": "cloudfunctions/",
-  "appid": "wx701fa763b504ded1",
+  "appid": "your-appid",
   "setting": {
     "useCompilerPlugins": ["typescript"]
   }

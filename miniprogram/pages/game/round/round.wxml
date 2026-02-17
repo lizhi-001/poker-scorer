@@ -37,7 +37,7 @@
 
       <van-cell-group title="{{streetLabels[currentStreet]}} — 输入下注额">
         <view wx:for="{{players}}" wx:key="_id" class="bet-row {{folded[index] ? 'bet-row-folded' : ''}}">
-          <van-cell title="{{item.nickname}}" label="当前: {{item.currentChips}}">
+          <van-cell title="{{item.nickname}}{{positionLabels[index] ? ' [' + positionLabels[index] + ']' : ''}}" label="当前: {{item.currentChips}}">
             <view slot="right-icon" class="bet-right">
               <van-field wx:if="{{!folded[index]}}" type="number" placeholder="下注额"
                 value="{{bets[index] || ''}}"

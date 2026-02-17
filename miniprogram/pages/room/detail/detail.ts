@@ -215,6 +215,9 @@ Page({
       wx.showToast({ title: '至少需要2名玩家', icon: 'none' })
       return
     }
+    // 自动分配庄家：首次开局时指定第一位活跃玩家为庄家
+    const active = this.data.players.filter((p: any) => p.isActive !== false)
+    const needDealer = !this.data.room.dealerOpenId && active.length >= 2
     const ok = await updateRoomStatus(
       this.data.roomId,
       'active',
@@ -225,14 +228,26 @@ Page({
       this.loadRoom()
       return
     }
+    if (needDealer) {
+      const db = wx.cloud.database()
+      await db.collection('rooms').doc(this.data.roomId).update({
+        data: { dealerOpenId: active[0].openId, updatedAt: db.serverDate() },
+      })
+    }
   },
 
   onStartRound() {
     const { roomId, room, players } = this.data
-    const dealerOpenId = room.dealerOpenId || ''
     const sb = room.smallBlind || 0
     const bb = room.bigBlind || 0
     const playerOrder = players.filter((p: any) => p.isActive !== false).map((p: any) => p.openId)
+
+    // 自动分配庄家：首次未设置时指定第一位活跃玩家
+    let dealerOpenId = room.dealerOpenId || ''
+    if (!dealerOpenId && playerOrder.length >= 2) {
+      dealerOpenId = playerOrder[0]
+    }
+
     wx.navigateTo({
       url: `/pages/game/round/round?roomId=${roomId}&dealerOpenId=${dealerOpenId}&smallBlind=${sb}&bigBlind=${bb}&playerOrder=${playerOrder.join(',')}`,
     })

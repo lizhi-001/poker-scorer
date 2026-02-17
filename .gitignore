@@ -5,6 +5,7 @@
 miniprogram_npm/
 node_modules/
 project.private.config.json
+project.config.json
 
 # npm
 package-lock.json
