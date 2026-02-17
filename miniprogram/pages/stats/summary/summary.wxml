@@ -3,6 +3,7 @@
     <van-cell wx:for="{{results}}" wx:key="openId" title="{{item.nickname}}" value="{{item.profit >= 0 ? '+' : ''}}{{item.profit}}" value-class="{{item.profit >= 0 ? 'text-success' : 'text-danger'}}" label="买入 {{item.totalBuyIn}} · 结余 {{item.finalChips}}" />
   </van-cell-group>
   <view class="actions">
+    <van-button plain type="info" block bind:click="onViewRounds">查看手牌历史</van-button>
     <van-button type="primary" block bind:click="onShare">生成结算图</van-button>
     <van-button type="warning" block bind:click="onEndGame">结束牌局</van-button>
   </view>

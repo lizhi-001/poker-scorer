@@ -1,0 +1,36 @@
+<view class="container">
+  <van-loading wx:if="{{loading}}" size="24px" vertical>加载中...</van-loading>
+
+  <van-empty wx:elif="{{!rounds.length}}" description="暂无手牌记录" />
+
+  <block wx:else>
+    <view class="round-card" wx:for="{{rounds}}" wx:key="_id">
+      <view class="round-header">
+        <text class="round-num">第 {{item.displayNum}} 手</text>
+        <text class="round-time">{{item.timeStr}}</text>
+      </view>
+
+      <view class="changes-section">
+        <view class="change-row" wx:for="{{item.changeList}}"
+          wx:for-item="c" wx:key="openId">
+          <text class="player-name">{{c.nickname}}</text>
+          <text class="delta {{c.delta >= 0 ? 'positive' : 'negative'}}">
+            {{c.sign}}{{c.delta}}
+          </text>
+        </view>
+      </view>
+
+      <view class="pots-section" wx:if="{{item.hasPots}}">
+        <view class="pot-row" wx:for="{{item.potList}}"
+          wx:for-item="pot" wx:key="winnerId">
+          <van-tag type="warning" size="medium">
+            底池 {{pot.amount}}
+          </van-tag>
+          <text class="pot-detail">
+            赢家: {{pot.winnerName}}
+          </text>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

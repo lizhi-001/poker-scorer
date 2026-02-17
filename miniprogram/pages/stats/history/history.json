@@ -1,1 +1,12 @@
-{"usingComponents": {"van-cell": "@vant/weapp/cell/index","van-cell-group": "@vant/weapp/cell-group/index","van-empty": "@vant/weapp/empty/index"},"navigationBarTitleText": "历史牌局"}
+{
+  "usingComponents": {
+    "van-cell": "@vant/weapp/cell/index",
+    "van-cell-group": "@vant/weapp/cell-group/index",
+    "van-empty": "@vant/weapp/empty/index",
+    "van-search": "@vant/weapp/search/index",
+    "van-tag": "@vant/weapp/tag/index",
+    "van-dropdown-menu": "@vant/weapp/dropdown-menu/index",
+    "van-dropdown-item": "@vant/weapp/dropdown-item/index"
+  },
+  "navigationBarTitleText": "历史牌局"
+}

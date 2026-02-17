@@ -26,6 +26,9 @@ Page({
   onShare() {
     wx.navigateTo({ url: `/pages/settlement/share/share?roomId=${this.data.roomId}` })
   },
+  onViewRounds() {
+    wx.navigateTo({ url: `/pages/stats/rounds/rounds?roomId=${this.data.roomId}` })
+  },
   async onEndGame() {
     const db = wx.cloud.database()
     await db.collection('rooms').doc(this.data.roomId).update({
