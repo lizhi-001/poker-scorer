@@ -7,12 +7,14 @@ exports.main = async (event, context) => {
 
   // 清理 30 天前已结算的房间
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  // 清理 24 小时前仍在等待中的房间
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
   const { data: expiredRooms } = await db.collection('rooms')
-    .where({
-      status: 'settled',
-      updatedAt: _.lt(thirtyDaysAgo),
-    })
+    .where(_.or([
+      { status: 'settled', updatedAt: _.lt(thirtyDaysAgo) },
+      { status: 'waiting', updatedAt: _.lt(oneDayAgo) },
+    ]))
     .get()
 
   let cleaned = 0

@@ -2,9 +2,15 @@
   <view class="card">
     <view class="room-header">
       <text class="room-name">{{room.name}}</text>
-      <van-tag type="success" wx:if="{{room.status === 'active'}}">进行中</van-tag>
+      <van-tag type="{{room.status === 'waiting' ? 'warning' : room.status === 'active' ? 'success' : 'default'}}">
+        {{room.status === 'waiting' ? '等待中' : room.status === 'active' ? '进行中' : '已结算'}}
+      </van-tag>
     </view>
     <view class="room-info">盲注 {{room.smallBlind}}/{{room.bigBlind}} · 买入 {{room.buyIn}}</view>
+    <view class="room-code" wx:if="{{room.roomCode}}" bind:tap="onCopyRoomCode">
+      房间号: <text class="code-text">{{room.roomCode}}</text>
+      <text class="copy-hint">点击复制</text>
+    </view>
   </view>
 
   <view class="section-title">玩家 ({{players.length}}人)</view>
@@ -47,10 +53,25 @@
 
   <van-empty wx:if="{{players.length === 0}}" description="暂无玩家，点击下方添加" />
 
-  <view class="actions">
+  <!-- waiting: 可添加玩家、开始游戏 -->
+  <view class="actions" wx:if="{{room.status === 'waiting'}}">
+    <van-button type="info" block bind:click="onAddPlayer">添加玩家</van-button>
+    <van-button type="primary" block bind:click="onStartGame" disabled="{{players.length < 2}}">
+      开始游戏 {{players.length < 2 ? '(至少2人)' : ''}}
+    </van-button>
+    <van-button plain type="info" block bind:click="onShareRoom">邀请好友</van-button>
+  </view>
+
+  <!-- active: 可记录牌局、添加玩家、结算 -->
+  <view class="actions" wx:elif="{{room.status === 'active'}}">
     <van-button type="info" block bind:click="onAddPlayer">添加玩家</van-button>
     <van-button type="primary" block bind:click="onStartRound" disabled="{{players.length < 2}}">记录一手牌</van-button>
     <van-button type="warning" block bind:click="onSettle">结算牌局</van-button>
+  </view>
+
+  <!-- settled: 只读 -->
+  <view class="settled-tip" wx:elif="{{room.status === 'settled'}}">
+    <van-empty description="牌局已结算" />
   </view>
 
   <!-- 买入弹窗 -->

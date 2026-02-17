@@ -1,12 +1,13 @@
 /** 房间/牌局 */
 export interface Room {
   _id: string
+  roomCode: string
   name: string
   creatorId: string
   smallBlind: number
   bigBlind: number
   buyIn: number
-  status: 'active' | 'settled' | 'archived'
+  status: 'waiting' | 'active' | 'settled' | 'archived'
   playerIds: string[]
   createdAt: Date
   updatedAt: Date

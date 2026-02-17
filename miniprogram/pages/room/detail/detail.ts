@@ -1,3 +1,5 @@
+let playerWatcher: any = null
+
 Page({
   data: {
     roomId: '',
@@ -6,6 +8,7 @@ Page({
     buyInAmount: '',
     buyInPlayerId: '',
     showBuyInDialog: false,
+    isCreator: false,
   },
   _watcher: null as any,
 
@@ -14,22 +17,46 @@ Page({
   },
   onShow() {
     this.loadRoom()
-    this.loadPlayers()
-    this.startWatch()
+    this._startPlayerWatch()
   },
   onHide() {
-    this.closeWatch()
+    this._stopPlayerWatch()
   },
   onUnload() {
-    this.closeWatch()
+    this._stopPlayerWatch()
   },
 
   async loadRoom() {
     const db = wx.cloud.database()
-    const { data } = await db.collection('rooms').doc(this.data.roomId).get()
-    this.setData({ room: data })
+    const { data } = await db.collection('rooms').doc(this.data.roomId).get() as any
+    const app = getApp()
+    this.setData({
+      room: data,
+      isCreator: data.creatorId === app.globalData.userStore?.openId,
+    })
   },
-  async loadPlayers() {
+  _startPlayerWatch() {
+    this._stopPlayerWatch()
+    const db = wx.cloud.database()
+    playerWatcher = db.collection('players')
+      .where({ roomId: this.data.roomId })
+      .watch({
+        onChange: (snapshot: any) => {
+          this.setData({ players: snapshot.docs })
+        },
+        onError: (err: any) => {
+          console.error('player watch error', err)
+          this._fallbackLoadPlayers()
+        },
+      })
+  },
+  _stopPlayerWatch() {
+    if (playerWatcher) {
+      playerWatcher.close()
+      playerWatcher = null
+    }
+  },
+  async _fallbackLoadPlayers() {
     const db = wx.cloud.database()
     const { data } = await db.collection('players')
       .where({ roomId: this.data.roomId, isActive: true })
@@ -38,42 +65,16 @@ Page({
     this.setData({ players: data })
   },
 
-  /** 实时监听玩家数据变化 */
-  startWatch() {
-    this.closeWatch()
-    const db = wx.cloud.database()
-    this._watcher = db.collection('players')
-      .where({ roomId: this.data.roomId, isActive: true })
-      .watch({
-        onChange: (snapshot: any) => {
-          if (snapshot.docs) {
-            this.setData({ players: snapshot.docs })
-          }
-        },
-        onError: (err: any) => {
-          console.error('watch error', err)
-        },
-      })
-  },
-  closeWatch() {
-    if (this._watcher) {
-      this._watcher.close()
-      this._watcher = null
-    }
-  },
-
   /** 移除玩家 */
   async onRemovePlayer(e: any) {
     const playerId = e.currentTarget.dataset.id
     const player = this.data.players.find((p: any) => p._id === playerId)
     if (!player) return
-
     const { confirm } = await wx.showModal({
       title: '移除玩家',
       content: `确定移除 ${player.nickname} 吗？`,
     })
     if (!confirm) return
-
     try {
       const db = wx.cloud.database()
       await db.collection('players').doc(playerId).update({
@@ -111,7 +112,6 @@ Page({
     }
     try {
       const db = wx.cloud.database()
-      // 更新玩家筹码和买入记录
       await db.collection('players').doc(buyInPlayerId).update({
         data: {
           currentChips: db.command.inc(amount),
@@ -119,14 +119,8 @@ Page({
           totalBuyIn: db.command.inc(amount),
         },
       })
-      // 创建买入记录
       await db.collection('buyins').add({
-        data: {
-          roomId,
-          playerId: buyInPlayerId,
-          amount,
-          createdAt: db.serverDate(),
-        },
+        data: { roomId, playerId: buyInPlayerId, amount, createdAt: db.serverDate() },
       })
       this.setData({ showBuyInDialog: false, buyInPlayerId: '', buyInAmount: '' })
       wx.showToast({ title: '买入成功', icon: 'success' })
@@ -138,10 +132,36 @@ Page({
   onAddPlayer() {
     wx.navigateTo({ url: `/pages/game/play/play?roomId=${this.data.roomId}` })
   },
+  async onStartGame() {
+    if (this.data.players.length < 2) {
+      wx.showToast({ title: '至少需要2名玩家', icon: 'none' })
+      return
+    }
+    const db = wx.cloud.database()
+    await db.collection('rooms').doc(this.data.roomId).update({
+      data: { status: 'active', updatedAt: db.serverDate() },
+    })
+    this.loadRoom()
+  },
   onStartRound() {
     wx.navigateTo({ url: `/pages/game/round/round?roomId=${this.data.roomId}` })
   },
   onSettle() {
     wx.navigateTo({ url: `/pages/stats/summary/summary?roomId=${this.data.roomId}` })
+  },
+  onCopyRoomCode() {
+    wx.setClipboardData({
+      data: this.data.room.roomCode,
+      success: () => wx.showToast({ title: '已复制房间号' }),
+    })
+  },
+  onShareRoom() {
+    wx.showShareMenu({ withShareTicket: true })
+  },
+  onShareAppMessage() {
+    return {
+      title: `来加入「${this.data.room.name}」`,
+      path: `/pages/room/detail/detail?id=${this.data.roomId}`,
+    }
   },
 })

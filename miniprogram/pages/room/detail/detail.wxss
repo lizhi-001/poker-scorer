@@ -1,6 +1,9 @@
 .room-header { display: flex; align-items: center; gap: 16rpx; margin-bottom: 12rpx; }
 .room-name { font-size: 36rpx; font-weight: bold; }
 .room-info { color: #999; font-size: 26rpx; }
+.room-code { margin-top: 16rpx; font-size: 28rpx; color: #666; display: flex; align-items: center; gap: 12rpx; }
+.code-text { font-size: 36rpx; font-weight: bold; color: #e94560; letter-spacing: 4rpx; }
+.copy-hint { font-size: 22rpx; color: #999; }
 .actions { margin-top: 32rpx; display: flex; flex-direction: column; gap: 20rpx; }
 
 .section-title {
