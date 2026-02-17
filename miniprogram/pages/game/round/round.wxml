@@ -1,11 +1,74 @@
 <view class="container">
-  <van-cell-group title="输入每位玩家筹码变动">
-    <van-cell wx:for="{{players}}" wx:key="_id" title="{{item.nickname}}">
-      <van-field slot="right-icon" type="digit" placeholder="+/-" data-index="{{index}}" bind:change="onDeltaChange" custom-style="text-align: right; width: 200rpx;" />
-    </van-cell>
-  </van-cell-group>
-  <view class="summary">
-    <text class="{{balanceOk ? 'text-success' : 'text-danger'}}">差额: {{balance}}</text>
-  </view>
-  <van-button type="primary" block bind:click="onConfirm" disabled="{{!balanceOk}}" loading="{{loading}}">确认记录</van-button>
+  <van-tabs active="{{activeTab}}" bind:change="onModeChange">
+    <van-tab title="简单模式" name="simple">
+      <van-cell-group title="输入每位玩家筹码变动">
+        <van-cell wx:for="{{players}}" wx:key="_id" title="{{item.nickname}}">
+          <van-field slot="right-icon" type="digit" placeholder="+/-"
+            data-index="{{index}}" bind:change="onDeltaChange"
+            custom-style="text-align:right;width:200rpx;" />
+        </van-cell>
+      </van-cell-group>
+      <view class="summary">
+        <text class="{{balanceOk ? 'text-ok' : 'text-err'}}">差额: {{balance}}</text>
+      </view>
+      <van-button type="primary" block bind:click="onConfirm"
+        disabled="{{!balanceOk}}" loading="{{loading}}">确认记录</van-button>
+    </van-tab>
+
+    <van-tab title="Side Pot" name="sidepot">
+      <van-cell-group title="输入每位玩家下注总额">
+        <van-cell wx:for="{{players}}" wx:key="_id" title="{{item.nickname}}">
+          <van-field slot="right-icon" type="number" placeholder="下注额"
+            data-index="{{index}}" bind:change="onBetChange"
+            custom-style="text-align:right;width:200rpx;" />
+        </van-cell>
+      </van-cell-group>
+
+      <view wx:if="{{pots.length > 0}}" class="pots-section">
+        <van-cell-group title="底池分配 — 选择每个底池赢家">
+          <view wx:for="{{pots}}" wx:for-item="pot" wx:for-index="potIdx"
+            wx:key="potIdx" class="pot-item">
+            <view class="pot-head">
+              <text class="pot-label">底池 {{potIdx + 1}}</text>
+              <text class="pot-amt">{{pot.amount}} 筹码</text>
+            </view>
+            <view class="pot-elig">
+              有资格:
+              <text wx:for="{{pot.eligibleNames}}" wx:for-item="n"
+                wx:key="*this" class="elig-name">{{n}}</text>
+            </view>
+            <view class="pot-winner">
+              <text class="win-label">赢家:</text>
+              <van-radio-group wx:if="{{pot.eligible.length > 1}}"
+                value="{{potWinners[potIdx]}}"
+                data-pot-index="{{potIdx}}" bind:change="onWinnerSelect"
+                direction="horizontal">
+                <van-radio wx:for="{{pot.eligible}}" wx:for-item="eid"
+                  wx:for-index="eidx" wx:key="*this" name="{{eid}}"
+                  custom-class="win-radio">{{pot.eligibleNames[eidx]}}</van-radio>
+              </van-radio-group>
+              <text wx:else class="auto-win">{{pot.eligibleNames[0]}}（自动）</text>
+            </view>
+          </view>
+        </van-cell-group>
+      </view>
+
+      <view wx:if="{{spChanges.length > 0}}" class="changes-section">
+        <van-cell-group title="筹码变动预览">
+          <van-cell wx:for="{{spChanges}}" wx:key="openId"
+            title="{{item.nickname}}">
+            <text class="{{item.delta >= 0 ? 'text-ok' : 'text-err'}}">
+              {{item.delta >= 0 ? '+' : ''}}{{item.delta}}
+            </text>
+          </van-cell>
+        </van-cell-group>
+        <view class="summary">
+          <text class="{{spReady ? 'text-ok' : 'text-err'}}">差额: {{spBalance}}</text>
+        </view>
+      </view>
+
+      <van-button type="primary" block bind:click="onConfirm"
+        disabled="{{!spReady}}" loading="{{loading}}">确认记录</van-button>
+    </van-tab>
+  </van-tabs>
 </view>
